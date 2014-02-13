@@ -31,7 +31,7 @@ include $(BUILD_STATIC_LIBRARY)
 # Changes
 1. The log2 implementation in gpt.cc was taken from
    [Senseg's port](https://github.com/Senseg/android_external_gptfdisk) of
-   gptfdisk-0.3.1
+   gptfdisk
 2. The Android.mk file was also inspired on the aforementioned port
 3. I added a simple implementation of toupper to support.cc as (s)gdisk 
    segfaulted when using the version provided by libc.
