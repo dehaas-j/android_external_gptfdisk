@@ -15,7 +15,7 @@ doing.
    directory.
 3. Ensure a static version of libuuid will be compiled. Edit 
    external/e2fsprogs/lib/uuid/Android.mk and add the following lines
-```
+    ```
 include $(CLEAR_VARS)
 LOCAL_SRC_FILES := $(libext2_uuid_src_files)
 LOCAL_C_INCLUDES := $(libext2_uuid_c_includes)
@@ -25,7 +25,7 @@ LOCAL_MODULE := libext2_uuid
 LOCAL_MODULE_TAGS := optional
 LOCAL_PRELINK_MODULE := false
 include $(BUILD_STATIC_LIBRARY)
-```
+    ```
 4. Build for your device
 
 # Changes
