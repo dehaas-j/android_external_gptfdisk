@@ -4,6 +4,11 @@ This is a quick and dirty port of
 file contains instructions on how to build statically linked binaries for gdisk 
 and sgdisk.
 
+# USE THIS CODE AND ITS DERIVATIVES AT YOUR OWN RISK
+It was written by an amateur, a hobbyist, who might not have known what he was 
+doing.
+
+
 # Compilation instructions
 1. Obtain the Android source code
 2. Clone this repository into the external directory of your Android code 
