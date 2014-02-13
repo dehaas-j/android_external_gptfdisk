@@ -38,6 +38,15 @@ using namespace std;
 #define log2(x) (log((double) x) / log(2.0))
 #endif // Microsoft Visual C++
 
+// copied from 
+// https://github.com/Senseg/android_external_gptfdisk/blob/a01d8e35b18781567410c4824deb55493f9d55f6/gpt.cc
+#ifdef _ANDROID
+static unsigned int log2( unsigned int x ) {
+  unsigned int ans = 0 ;
+  while( x>>=1 ) ans++;
+  return ans ;
+}
+#endif
 /****************************************
  *                                      *
  * GPTData class and related structures *
