@@ -31,6 +31,14 @@
 
 using namespace std;
 
+// LangeOortjes wiggled his nose here
+static char toupper(char c) {
+  if (c >= 'a' && c <= 'z') {
+    return c - 32;
+  }
+  return c;
+}
+
 // Reads a string from stdin, returning it as a C++-style string.
 // Note that the returned string will NOT include the carriage return
 // entered by the user.
