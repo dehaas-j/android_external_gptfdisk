@@ -2,7 +2,7 @@
 // Class to manage partition type codes -- a slight variant on MBR type
 // codes, GUID type codes, and associated names.
 
-/* This program is copyright (c) 2009-2013 by Roderick W. Smith. It is distributed
+/* This program is copyright (c) 2009-2014 by Roderick W. Smith. It is distributed
   under the terms of the GNU GPL version 2, as detailed in the COPYING file. */
 
 #define __STDC_LIMIT_MACROS
@@ -92,7 +92,8 @@ void PartType::AddAllTypes(void) {
    AddType(0x2700, "DE94BBA4-06D1-4D40-A16A-BFD50179D6AC", "Windows RE");
 
    // Open Network Install Environment (ONIE) specific types.
-   // See http://www.onie.org/
+   // See http://www.onie.org/ and
+   // https://github.com/onie/onie/blob/master/rootconf/x86_64/sysroot-lib-onie/onie-blkdev-common
    AddType(0x3000, "7412F7D5-A156-4B13-81DC-867174929325", "ONIE boot");
    AddType(0x3001, "D4E6E2CD-4469-46F3-B5CB-1BFF57AFC149", "ONIE config");
 
@@ -314,6 +315,7 @@ string PartType::TypeName(void) const {
    return typeName;
 } // PartType::TypeName()
 
+#ifdef USE_UTF16
 // Return the Unicode description of the partition type (e.g., "Linux filesystem")
 UnicodeString PartType::UTypeName(void) const {
    AType* theItem = allTypes;
@@ -333,6 +335,7 @@ UnicodeString PartType::UTypeName(void) const {
    } // if (!found)
    return typeName;
 } // PartType::TypeName()
+#endif
 
 // Return the custom GPT fdisk 2-byte (16-bit) hex code for this GUID partition type
 // Note that this function ignores entries for which the display variable

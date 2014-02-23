@@ -1,5 +1,37 @@
-0.8.9 (??/??/2014):
+0.8.10 (?/??/2014):
 -------------------
+
+- Fixed bug that caused incorrect partition number to be displayed by
+  sgdisk in error messages when the user specified a non-existent partition
+  for inclusion in a hybrid MBR or conversion to a conventional MBR.
+
+- Fixed new (in 0.8.9) bug that caused a failure to create more than one
+  hybridized partition when creating a hybrid MBR.
+
+- Fixed bug that caused gdisk and sgdisk to create hybridized partitions
+  that ended at or above the 2^32 sector point with incorrect end values.
+  The behavior now varies between gdisk and sgdisk: gdisk now creates
+  hybrid partitions that begin below 2^32 sectors and that are smaller than
+  2^32 sectors, since this is technically legal; but gdisk displays a
+  warning, because some OSes (such as DOS, Windows XP, OS/2, and BeOS)
+  misbehave with such partitions. AFAIK, only Linux, FreeBSD, and Windows 7
+  work properly with such partitions. Because of this fact and because
+  sgdisk is a more automated tool, it's stricter in how it handles things:
+  It refuses to create a hybrid partition if the original ends at or above
+  the 2^32 sector mark.
+
+0.8.9 (2/17/2014):
+------------------
+
+- Removed dependency on libicu for UTF-16 support.
+
+- Fixed spurious "0xEE partition doesn't start on sector 1" warning in
+  FixParts (and perhaps in other programs under some circumstances).
+
+- Added GPT regeneration command to GPT-destruction options ('z' in gdisk,
+  -z and -Z options to sgdisk). This is done to avoid wiping out data
+  mid-disk that might not be backup GPT data structures, which could
+  otherwise occur if a RAID array was resized in certain ways.
 
 - Added check for an oversized 0xEE protective partition. The program now
   auto-repairs this condition on loading if the GPT data seem otherwise

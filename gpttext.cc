@@ -309,7 +309,11 @@ int GPTDataTextUI::SetName(uint32_t partNum) {
 
    if (IsUsedPartNum(partNum)) {
       cout << "Enter name: ";
+#ifdef USE_UTF16
       theName = ReadUString();
+#else
+      theName = ReadString();
+#endif
       partitions[partNum].SetName(theName);
    } else {
       cerr << "Invalid partition number (" << partNum << ")\n";
@@ -390,9 +394,9 @@ void GPTDataTextUI::ShowDetails(void) {
 // Create a hybrid MBR -- an ugly, funky thing that helps GPT work with
 // OSes that don't understand GPT.
 void GPTDataTextUI::MakeHybrid(void) {
-   uint32_t partNums[3];
+   uint32_t partNums[3] = {0, 0, 0};
    string line;
-   int numPartsToCvt, i, j, mbrNum = 0;
+   int numPartsToCvt = 0, numConverted = 0, i, j, mbrNum = 0;
    unsigned int hexCode = 0;
    MBRPart hybridPart;
    MBRData hybridMBR;
@@ -412,7 +416,12 @@ void GPTDataTextUI::MakeHybrid(void) {
    cout << "Type from one to three GPT partition numbers, separated by spaces, to be\n"
         << "added to the hybrid MBR, in sequence: ";
    line = ReadString();
-   numPartsToCvt = sscanf(line.c_str(), "%d %d %d", &partNums[0], &partNums[1], &partNums[2]);
+   istringstream inLine(line);
+   do {
+      inLine >> partNums[numPartsToCvt];
+      if (partNums[numPartsToCvt] > 0)
+         numPartsToCvt++;
+   } while (!inLine.eof() && (numPartsToCvt < 3));
 
    if (numPartsToCvt > 0) {
       cout << "Place EFI GPT (0xEE) partition first in MBR (good for GRUB)? ";
@@ -421,7 +430,7 @@ void GPTDataTextUI::MakeHybrid(void) {
 
    for (i = 0; i < numPartsToCvt; i++) {
       j = partNums[i] - 1;
-      if (partitions[j].IsUsed()) {
+      if (partitions[j].IsUsed() && (partitions[j].IsSizedForMBR() != MBR_SIZED_BAD)) {
          mbrNum = i + (eeFirst == 'Y');
          cout << "\nCreating entry for GPT partition #" << j + 1
               << " (MBR partition #" << mbrNum + 1 << ")\n";
@@ -434,13 +443,16 @@ void GPTDataTextUI::MakeHybrid(void) {
          else
             hybridPart.SetStatus(0x00);
          hybridPart.SetInclusion(PRIMARY);
+         if (partitions[j].IsSizedForMBR() == MBR_SIZED_IFFY)
+            WarnAboutIffyMBRPart(j + 1);
+         numConverted++;
       } else {
-         cerr << "\nGPT partition #" << j + 1 << " does not exist; skipping.\n";
+         cerr << "\nGPT partition #" << j + 1 << " does not exist or is too big; skipping.\n";
       } // if/else
       hybridMBR.AddPart(mbrNum, hybridPart);
    } // for
 
-   if (numPartsToCvt > 0) { // User opted to create a hybrid MBR....
+   if (numConverted > 0) { // User opted to create a hybrid MBR....
       // Create EFI protective partition that covers the start of the disk.
       // If this location (covering the main GPT data structures) is omitted,
       // Linux won't find any partitions on the disk.
@@ -452,7 +464,7 @@ void GPTDataTextUI::MakeHybrid(void) {
       if (eeFirst == 'Y') {
          hybridMBR.AddPart(0, hybridPart);
       } else {
-         hybridMBR.AddPart(numPartsToCvt, hybridPart);
+         hybridMBR.AddPart(numConverted, hybridPart);
       } // else
       hybridMBR.SetHybrid();
 
@@ -470,7 +482,9 @@ void GPTDataTextUI::MakeHybrid(void) {
          } // if (GetYN() == 'Y')
       } // if unused entry
       protectiveMBR = hybridMBR;
-   } // if (numPartsToCvt > 0)
+   } else {
+      cout << "\nNo partitions converted; original protective/hybrid MBR is unmodified!\n";
+   } // if/else (numConverted > 0)
 } // GPTDataTextUI::MakeHybrid()
 
 // Convert the GPT to MBR form, storing partitions in the protectiveMBR
@@ -487,6 +501,10 @@ int GPTDataTextUI::XFormToMBR(void) {
    protectiveMBR.EmptyMBR(0);
    for (i = 0; i < numParts; i++) {
       if (partitions[i].IsUsed()) {
+         if (partitions[i].IsSizedForMBR() == MBR_SIZED_IFFY)
+            WarnAboutIffyMBRPart(i + 1);
+         // Note: MakePart() checks for oversized partitions, so don't
+         // bother checking other IsSizedForMBR() return values....
          protectiveMBR.MakePart(i, partitions[i].GetFirstLBA(),
                                 partitions[i].GetLengthLBA(),
                                 partitions[i].GetHexType() / 0x0100, 0);
@@ -496,6 +514,24 @@ int GPTDataTextUI::XFormToMBR(void) {
    return protectiveMBR.DoMenu();
 } // GPTDataTextUI::XFormToMBR()
 
+/******************************************************
+ *                                                    *
+ * Display informational messages for the user....    *
+ *                                                    *
+ ******************************************************/
+
+// Although an MBR partition that begins below sector 2^32 and is less than 2^32 sectors in
+// length is technically legal even if it ends above the 2^32-sector mark, such a partition
+// tends to confuse a lot of OSes, so warn the user about such partitions. This function is
+// called by XFormToMBR() and MakeHybrid(); it's a separate function just to consolidate the
+// lengthy message in one place.
+void GPTDataTextUI::WarnAboutIffyMBRPart(int partNum) {
+   cout << "\a\nWarning! GPT partition " << partNum << " ends after the 2^32 sector mark! The partition\n"
+        << "begins before this point, and is smaller than 2^32 sectors. This is technically\n"
+        << "legal, but will confuse some OSes. The partition IS being added to the MBR, but\n"
+        << "if your OS misbehaves or can't see the partition, the partition may simply be\n"
+        << "unusable in that OS and may need to be resized or omitted from the MBR.\n\n";
+} // GPTDataTextUI::WarnAboutIffyMBRPart()
 
 /*********************************************************************
  *                                                                   *
@@ -854,7 +890,7 @@ void GPTDataTextUI::ShowExpertCommands(void) {
    cout << "r\trecovery and transformation options (experts only)\n";
    cout << "s\tresize partition table\n";
    cout << "t\ttranspose two partition table entries\n";
-   cout << "u\tReplicate partition table on new device\n";
+   cout << "u\treplicate partition table on new device\n";
    cout << "v\tverify disk\n";
    cout << "w\twrite table to disk and exit\n";
    cout << "z\tzap (destroy) GPT data structures and exit\n";
@@ -894,6 +930,7 @@ int GetMBRTypeCode(int defType) {
    return typeCode;
 } // GetMBRTypeCode
 
+#ifdef USE_UTF16
 // Note: ReadUString() is here rather than in support.cc so that the ICU
 // libraries need not be linked to fixparts.
 
@@ -904,4 +941,5 @@ int GetMBRTypeCode(int defType) {
 UnicodeString ReadUString(void) {
    return ReadString().c_str();
 } // ReadUString()
+#endif
    

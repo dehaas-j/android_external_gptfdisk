@@ -25,6 +25,11 @@
 
 using namespace std;
 
+// Values returned by GPTPart::IsSizedForMBR()
+#define MBR_SIZED_GOOD 0 /* Whole partition under 2^32 sectors */
+#define MBR_SIZED_IFFY 1 /* Partition starts under 2^32 & is less than 2^32, but ends over 2^32 */
+#define MBR_SIZED_BAD  2 /* Partition starts over 2^32, is bigger than 2^32, or otherwise bad */
+
 /****************************************
  *                                      *
  * GPTPart class and related structures *
@@ -45,7 +50,7 @@ class GPTPart {
       uint64_t firstLBA;
       uint64_t lastLBA;
       Attributes attributes;
-      unsigned char name[NAME_SIZE];
+      uint16_t name[NAME_SIZE];
    public:
       GPTPart(void);
       ~GPTPart(void);
@@ -63,6 +68,7 @@ class GPTPart {
       void ShowAttributes(uint32_t partNum) {attributes.ShowAttributes(partNum);}
       UnicodeString GetDescription(void);
       int IsUsed(void);
+      int IsSizedForMBR(void);
 
       // Simple data assignment:
       void SetType(PartType t);

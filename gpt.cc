@@ -1323,6 +1323,7 @@ int GPTData::DestroyGPT(void) {
    uint8_t* emptyTable;
 
    memset(blankSector, 0, sizeof(blankSector));
+   ClearGPTData();
 
    if (myDisk.OpenForWrite()) {
       if (!myDisk.Seek(mainHeader.currentLBA))
@@ -2447,7 +2448,7 @@ int SizesOK(void) {
       allOK = 0;
    } // if
    if (sizeof(PartType) != 16) {
-      cerr << "PartType is " << sizeof(GUIDData) << " bytes, should be 16 bytes; aborting!\n";
+      cerr << "PartType is " << sizeof(PartType) << " bytes, should be 16 bytes; aborting!\n";
       allOK = 0;
    } // if
    return (allOK);
