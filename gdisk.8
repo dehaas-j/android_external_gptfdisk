@@ -1,6 +1,6 @@
 .\" Copyright 2011-2013 Roderick W. Smith (rodsmith@rodsbooks.com)
 .\" May be distributed under the GNU General Public License
-.TH "GDISK" "8" "0.8.9" "Roderick W. Smith" "GPT fdisk Manual"
+.TH "GDISK" "8" "0.8.10" "Roderick W. Smith" "GPT fdisk Manual"
 .SH "NAME"
 gdisk \- Interactive GUID partition table (GPT) manipulator
 .SH "SYNOPSIS"
@@ -335,7 +335,7 @@ OSes, or those that can't boot from a GPT disk, to access up to three of
 the partitions on the disk by creating MBR entries for them. Note that
 these hybrid MBR entries can easily go out of sync with the GPT entries,
 particularly when hybrid\-unaware GPT utilities are used to edit the disk.
-Thus, you may need to recreate the hybrid MBR if you use such tools. Unlike
+Thus, you may need to re\-create the hybrid MBR if you use such tools. Unlike
 the 'g' option, this option does not support converting any partitions into
 MBR logical partitions.
 
@@ -561,7 +561,7 @@ entering data. When only one option is possible, \fBgdisk\fR
 usually bypasses the prompt entirely.
 
 .SH "BUGS"
-As of February 2014 (version 0.8.9), \fBgdisk\fR
+As of March 2014 (version 0.8.10), \fBgdisk\fR
 should be considered beta software. Known bugs and limitations include:
 
 .TP 
